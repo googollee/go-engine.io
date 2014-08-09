@@ -228,13 +228,25 @@ func (s *conn) onPacket(decoder *packetDecoder) {
 	closeChan := make(chan struct{})
 	s.readerChan <- newConnReader(decoder, closeChan)
 	<-closeChan
+	defer recover()
 	close(closeChan)
+
 }
 
 func (s *conn) onClose() {
-	close(s.readerChan)
-	close(s.pingChan)
-	s.server.onClose(s)
+	defer func() {
+		defer recover()
+		close(s.readerChan)
+	}()
+
+	defer func() {
+		defer recover()
+		close(s.pingChan)
+	}()
+
+	defer func() {
+		s.server.onClose(s)
+	}()
 }
 
 func (s *conn) pingLoop() {
