@@ -8,6 +8,7 @@ import (
 	"github.com/googollee/go-engine.io/polling"
 	"github.com/googollee/go-engine.io/websocket"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -16,6 +17,7 @@ type config struct {
 	PingInterval  time.Duration
 	AllowRequest  func(*http.Request) error
 	AllowUpgrades bool
+	AccessControl func(*http.Request) (orign string, credentials string, methods string, headers string, maxAge int)
 	Cookie        string
 }
 
@@ -49,6 +51,9 @@ func NewServer(transports []string) (*Server, error) {
 			PingInterval:  25000 * time.Millisecond,
 			AllowRequest:  func(*http.Request) error { return nil },
 			AllowUpgrades: true,
+			AccessControl: func(*http.Request) (orign string, credentials string, methods string, headers string, maxAge int) {
+				return "", "", "", "", -1
+			},
 			Cookie:        "io",
 		},
 		socketChan:     make(chan Conn),
@@ -75,6 +80,11 @@ func (s *Server) SetAllowRequest(f func(*http.Request) error) {
 // SetAllowUpgrades sets whether server allows transport upgrade. Default is true.
 func (s *Server) SetAllowUpgrades(allow bool) {
 	s.config.AllowUpgrades = allow
+}
+
+// SetAccessControl sets the middleware function which controls "Access-Control-Allow-*" header beaviors. Default will publish no access control headers
+func (s *Server) SetAccessControl(f func(*http.Request) (orign string, credentials string, methods string, headers string, maxAge int)) {
+	s.config.AccessControl = f
 }
 
 // SetCookie sets the name of cookie which used by engine.io. Default is "io".
@@ -119,6 +129,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, c := range cookies {
 		w.Header().Set("Set-Cookie", c.String())
 	}
+	s.setAccessControlHeaders(w, r, s.config.AccessControl)
 	conn.ServeHTTP(w, r)
 }
 
@@ -137,6 +148,26 @@ func (s *Server) transports() transportCreaters {
 
 func (s *Server) onClose(id string) {
 	s.serverSessions.Remove(id)
+}
+
+func (s *Server) setAccessControlHeaders(w http.ResponseWriter, r *http.Request, f func(*http.Request) (orign string, credentials string, methods string, headers string, maxAge int)) {
+	origin, credentials, methods, headers, maxAge := f(r)
+
+	if origin != "" {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+	}
+	if credentials != "" {
+		w.Header().Set("Access-Control-Allow-Credentials", credentials)
+	}
+	if methods != "" {
+		w.Header().Set("Access-Control-Allow-Methods", methods)
+	}
+	if headers != "" {
+		w.Header().Set("Access-Control-Allow-Headers", headers)
+	}
+	if maxAge > 0 {
+		w.Header().Set("Access-Control-Max-Age", strconv.Itoa(maxAge))
+	}
 }
 
 func (s *Server) newId(r *http.Request) string {
