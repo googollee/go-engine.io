@@ -109,8 +109,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	cookies := r.Cookies()
 	sid := r.URL.Query().Get("sid")
-	conn := s.serverSessions.Get(sid).(*serverConn)
-	if conn == nil {
+
+	var conn *serverConn
+	if s.serverSessions.Get(sid) == nil {
 		if sid != "" {
 			http.Error(w, "invalid sid", http.StatusBadRequest)
 			return
@@ -143,6 +144,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		})
 
 		s.socketChan <- conn
+	} else {
+		conn = s.serverSessions.Get(sid).(*serverConn)
 	}
 	for _, c := range cookies {
 		w.Header().Set("Set-Cookie", c.String())
