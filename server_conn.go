@@ -375,8 +375,10 @@ func (c *serverConn) pingLoop() {
 			}
 			lastTry = time.Now()
 		case <-pingTimedOut.C:
-			c.Close()
-			return
+			if c.getState() == stateNormal {
+				c.Close()
+				return
+			}
 		}
 		now = time.Now()
 	}
