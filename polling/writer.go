@@ -25,8 +25,11 @@ func (w *Writer) Close() error {
 	if w.server.getState() != stateNormal {
 		return errors.New("use of closed network connection")
 	}
+	w.server.sendChanMu.Lock()
+	sendChan := w.server.sendChan
+	w.server.sendChanMu.Unlock()
 	select {
-	case w.server.sendChan <- true:
+	case sendChan <- true:
 	default:
 	}
 	return w.WriteCloser.Close()

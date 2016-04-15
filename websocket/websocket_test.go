@@ -334,8 +334,12 @@ func TestWebsocket(t *testing.T) {
 		defer c.Close()
 
 		<-sync
+
 		// So(f.ClosedCount(), ShouldEqual, 1)
-		So(f.closeServer, ShouldEqual, s)
+		f.countLocker.Lock()
+		closeServer := f.closeServer
+		f.countLocker.Unlock()
+		So(closeServer, ShouldEqual, s)
 	})
 
 	Convey("Closing by disconnected", t, func() {

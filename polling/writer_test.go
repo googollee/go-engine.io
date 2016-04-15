@@ -12,7 +12,9 @@ func TestWriter(t *testing.T) {
 		state:    stateNormal,
 		sendChan: MakeSendChan(),
 	}
+	p.sendChanMu.Lock()
 	sendChan := p.sendChan
+	p.sendChanMu.Unlock()
 
 	Convey("Wait close", t, func() {
 		w := newFakeWriteCloser()

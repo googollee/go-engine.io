@@ -23,6 +23,7 @@ const (
 
 type Polling struct {
 	sendChan    chan bool
+	sendChanMu  sync.Mutex
 	encoder     *parser.PayloadEncoder
 	callback    transport.Callback
 	getLocker   *Locker
@@ -60,7 +61,9 @@ func (p *Polling) Close() error {
 	if p.getState() != stateNormal {
 		return nil
 	}
+	p.sendChanMu.Lock()
 	close(p.sendChan)
+	p.sendChanMu.Unlock()
 	p.setState(stateClosing)
 	if p.getLocker.TryLock() {
 		if p.postLocker.TryLock() {
@@ -114,7 +117,10 @@ func (p *Polling) get(w http.ResponseWriter, r *http.Request) {
 		p.getLocker.Unlock()
 	}()
 
-	<-p.sendChan
+	p.sendChanMu.Lock()
+	sendChan := p.sendChan
+	p.sendChanMu.Unlock()
+	<-sendChan
 
 	if j := r.URL.Query().Get("j"); j != "" {
 		// JSONP Polling
