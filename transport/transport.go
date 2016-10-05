@@ -3,6 +3,7 @@ package transport
 import (
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/googollee/go-engine.io/message"
 	"github.com/googollee/go-engine.io/parser"
@@ -28,6 +29,9 @@ type Server interface {
 
 	// Close closes the transport.
 	Close() error
+
+	// SetWriteTimeout sets a timeout for writes with SetWriteDeadline
+	SetWriteTimeout(t time.Duration)
 
 	// NextWriter returns packet writer. This function call should be synced.
 	NextWriter(messageType message.MessageType, packetType parser.PacketType) (io.WriteCloser, error)

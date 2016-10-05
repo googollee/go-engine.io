@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/googollee/go-engine.io/message"
 )
@@ -60,23 +61,29 @@ func (t PacketType) Byte() byte {
 	return 6
 }
 
+type DeadlineWriter interface {
+	SetWriteDeadline(t time.Time) error
+	GetWriteTimeout() time.Duration
+}
+
 // packetEncoder is the encoder which encode the packet.
 type PacketEncoder struct {
 	closer io.Closer
 	w      io.Writer
+	dlw    DeadlineWriter
 }
 
 // NewStringEncoder return the encoder which encode type t to writer w, as string.
-func NewStringEncoder(w io.Writer, t PacketType) (*PacketEncoder, error) {
-	return newEncoder(w, t.Byte()+'0')
+func NewStringEncoder(w io.Writer, dlw DeadlineWriter, t PacketType) (*PacketEncoder, error) {
+	return newEncoder(w, dlw, t.Byte()+'0')
 }
 
 // NewBinaryEncoder return the encoder which encode type t to writer w, as binary.
-func NewBinaryEncoder(w io.Writer, t PacketType) (*PacketEncoder, error) {
-	return newEncoder(w, t.Byte())
+func NewBinaryEncoder(w io.Writer, dlw DeadlineWriter, t PacketType) (*PacketEncoder, error) {
+	return newEncoder(w, dlw, t.Byte())
 }
 
-func newEncoder(w io.Writer, t byte) (*PacketEncoder, error) {
+func newEncoder(w io.Writer, dlw DeadlineWriter, t byte) (*PacketEncoder, error) {
 	if _, err := w.Write([]byte{t}); err != nil {
 		return nil, err
 	}
@@ -87,11 +94,12 @@ func newEncoder(w io.Writer, t byte) (*PacketEncoder, error) {
 	return &PacketEncoder{
 		closer: closer,
 		w:      w,
+		dlw:    dlw,
 	}, nil
 }
 
 // NewB64Encoder return the encoder which encode type t to writer w, as string. When write binary, it uses base64.
-func NewB64Encoder(w io.Writer, t PacketType) (*PacketEncoder, error) {
+func NewB64Encoder(w io.Writer, dlw DeadlineWriter, t PacketType) (*PacketEncoder, error) {
 	_, err := w.Write([]byte{'b', t.Byte() + '0'})
 	if err != nil {
 		return nil, err
@@ -100,6 +108,7 @@ func NewB64Encoder(w io.Writer, t PacketType) (*PacketEncoder, error) {
 	return &PacketEncoder{
 		closer: base,
 		w:      base,
+		dlw:    dlw,
 	}, nil
 }
 
@@ -111,6 +120,11 @@ func (e *PacketEncoder) Write(p []byte) (int, error) {
 // Close closes the encoder.
 func (e *PacketEncoder) Close() error {
 	if e.closer != nil {
+		if e.dlw != nil {
+			if t := e.dlw.GetWriteTimeout(); t > 0 {
+				e.dlw.SetWriteDeadline(time.Now().Add(t))
+			}
+		}
 		return e.closer.Close()
 	}
 	return nil

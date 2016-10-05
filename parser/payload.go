@@ -63,7 +63,7 @@ func (e encoder) Close() error {
 // NextString returns the encoder with packet type t and encode as string.
 func (e *PayloadEncoder) NextString(t PacketType) (io.WriteCloser, error) {
 	buf := bytes.NewBuffer(nil)
-	pEncoder, err := NewStringEncoder(buf, t)
+	pEncoder, err := NewStringEncoder(buf, nil, t)
 	if err != nil {
 		return nil, err
 	}
@@ -81,9 +81,9 @@ func (e *PayloadEncoder) NextBinary(t PacketType) (io.WriteCloser, error) {
 	var pEncoder *PacketEncoder
 	var err error
 	if e.isString {
-		pEncoder, err = NewB64Encoder(buf, t)
+		pEncoder, err = NewB64Encoder(buf, nil, t)
 	} else {
-		pEncoder, err = NewBinaryEncoder(buf, t)
+		pEncoder, err = NewBinaryEncoder(buf, nil, t)
 	}
 	if err != nil {
 		return nil, err
