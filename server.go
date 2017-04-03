@@ -155,6 +155,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Name:  s.config.Cookie,
 		Value: sid,
 	})
+	
+	//add CORS header
+	OriginList := r.Header["Origin"]
+	Origin := ""
+	if len(OriginList) > 0 {
+		Origin = OriginList[0]
+	}
+	w.Header().Add("Access-Control-Allow-Origin", Origin)
+	w.Header().Add("Access-Control-Allow-Credentials", "true")
 
 	conn.(*serverConn).ServeHTTP(w, r)
 }
