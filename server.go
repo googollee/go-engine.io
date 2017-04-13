@@ -35,7 +35,7 @@ type Server struct {
 // NewServer returns the server suppported given transports. If transports is nil, server will use ["polling", "websocket"] as default.
 func NewServer(transports []string) (*Server, error) {
 	if transports == nil {
-		transports = []string{"polling", "websocket"}
+		transports = []string{"websocket", "polling"}
 	}
 	creaters := make(transportCreaters)
 	for _, t := range transports {
