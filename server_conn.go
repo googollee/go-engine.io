@@ -38,6 +38,9 @@ type Conn interface {
 
 	// NextWriter returns the next message writer with given message type.
 	NextWriter(messageType MessageType) (io.WriteCloser, error)
+
+	// SetWriteTimeout sets a timeout for writes with SetWriteDeadline
+	SetWriteTimeout(t time.Duration)
 }
 
 type transportCreaters map[string]transport.Creater
@@ -156,6 +159,10 @@ func (c *serverConn) NextWriter(t MessageType) (io.WriteCloser, error) {
 	}
 	writer := newConnWriter(ret, &c.writerLocker)
 	return writer, err
+}
+
+func (c *serverConn) SetWriteTimeout(t time.Duration) {
+	c.getCurrent().SetWriteTimeout(t)
 }
 
 func (c *serverConn) Close() error {

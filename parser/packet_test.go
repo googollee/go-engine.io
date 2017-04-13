@@ -114,7 +114,7 @@ func TestStringParser(t *testing.T) {
 		Convey("Given a packet type "+test.name, t, func() {
 
 			Convey("Create encoder", func() {
-				encoder, err := NewStringEncoder(buf, test.t)
+				encoder, err := NewStringEncoder(buf, nil, test.t)
 				So(err, ShouldBeNil)
 				So(encoder, ShouldImplement, (*io.WriteCloser)(nil))
 
@@ -176,7 +176,7 @@ func TestBinaryParser(t *testing.T) {
 		Convey("Given a packet type "+test.name, t, func() {
 
 			Convey("Create Encoder", func() {
-				encoder, err := NewBinaryEncoder(buf, test.t)
+				encoder, err := NewBinaryEncoder(buf, nil, test.t)
 				So(err, ShouldBeNil)
 				So(encoder, ShouldImplement, (*io.WriteCloser)(nil))
 
@@ -238,7 +238,7 @@ func TestBase64Parser(t *testing.T) {
 		Convey("Given a packet type "+test.name, t, func() {
 
 			Convey("Create Encoder", func() {
-				encoder, err := NewB64Encoder(buf, test.t)
+				encoder, err := NewB64Encoder(buf, nil, test.t)
 				So(err, ShouldBeNil)
 				So(encoder, ShouldImplement, (*io.WriteCloser)(nil))
 

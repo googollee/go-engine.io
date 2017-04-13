@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/googollee/go-engine.io/message"
 	"github.com/googollee/go-engine.io/parser"
@@ -194,4 +195,13 @@ func (p *Polling) getState() state {
 	p.stateLocker.Lock()
 	defer p.stateLocker.Unlock()
 	return p.state
+}
+
+func (s *Polling) SetWriteTimeout(t time.Duration) {
+}
+func (s *Polling) GetWriteTimeout() time.Duration {
+	return 0
+}
+func (s *Polling) SetWriteDeadline(t time.Time) error {
+	return nil
 }

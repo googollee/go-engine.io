@@ -3,6 +3,7 @@ package websocket
 import (
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/googollee/go-engine.io/message"
 	"github.com/googollee/go-engine.io/parser"
@@ -13,6 +14,7 @@ import (
 type Server struct {
 	callback transport.Callback
 	conn     *websocket.Conn
+	timeout  time.Duration
 }
 
 func NewServer(w http.ResponseWriter, r *http.Request, callback transport.Callback) (transport.Server, error) {
@@ -45,7 +47,7 @@ func (s *Server) NextWriter(msgType message.MessageType, packetType parser.Packe
 	if err != nil {
 		return nil, err
 	}
-	ret, err := newEncoder(w, packetType)
+	ret, err := newEncoder(w, s, packetType)
 	if err != nil {
 		return nil, err
 	}
@@ -78,4 +80,14 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			decoder.Close()
 		}
 	}
+}
+
+func (s *Server) SetWriteTimeout(t time.Duration) {
+	s.timeout = t
+}
+func (s *Server) GetWriteTimeout() time.Duration {
+	return s.timeout
+}
+func (s *Server) SetWriteDeadline(t time.Time) error {
+	return s.conn.SetWriteDeadline(t)
 }

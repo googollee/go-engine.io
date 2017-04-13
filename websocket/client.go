@@ -60,7 +60,7 @@ func (c *client) NextWriter(msgType message.MessageType, packetType parser.Packe
 	if err != nil {
 		return nil, err
 	}
-	ret, err := newEncoder(w, packetType)
+	ret, err := newEncoder(w, nil, packetType)
 	if err != nil {
 		return nil, err
 	}
