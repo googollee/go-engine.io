@@ -16,7 +16,7 @@ type Server struct {
 }
 
 func NewServer(w http.ResponseWriter, r *http.Request, callback transport.Callback) (transport.Server, error) {
-	conn, err := websocket.Upgrade(w, r, nil, 10240, 10240)
+	conn, err := websocket.Upgrade(w, r, w.Header(), 10240, 10240)
 	if err != nil {
 		return nil, err
 	}
