@@ -19,6 +19,7 @@ type session struct {
 	closeOnce sync.Once
 	context   interface{}
 
+	writeLocker sync.RWMutex
 	upgradeLocker sync.RWMutex
 	transport     string
 	conn          base.Conn
@@ -131,39 +132,43 @@ func (s *session) nextReader() (base.FrameType, base.PacketType, io.ReadCloser, 
 	var pt base.PacketType
 	var r io.ReadCloser
 	var err error
-	for {
+	for i := 0; i < 30; i++ {
 		s.upgradeLocker.RLock()
 		ft, pt, r, err = s.conn.NextReader()
 		if err != nil {
 			s.upgradeLocker.RUnlock()
 			if op, ok := err.(payload.Error); ok {
 				if op.Temporary() {
+					time.Sleep(50 * time.Millisecond)
 					continue
 				}
 			}
 			return 0, 0, nil, err
 		}
-		s.upgradeLocker.RUnlock()
 		return ft, pt, newReader(r, &s.upgradeLocker), nil
 	}
+	return 0, 0, nil, err
 }
 
 func (s *session) nextWriter(ft base.FrameType, pt base.PacketType) (io.WriteCloser, error) {
-	for {
-		s.upgradeLocker.RLock()
-		w, err := s.conn.NextWriter(ft, pt)
+	var w io.WriteCloser
+	var err error
+	for i := 0; i < 30; i++ {
+		s.writeLocker.Lock()
+		w, err = s.conn.NextWriter(ft, pt)
 		if err != nil {
-			s.upgradeLocker.RUnlock()
+			s.writeLocker.Unlock()
 			if op, ok := err.(payload.Error); ok {
 				if op.Temporary() {
+					time.Sleep(50 * time.Millisecond)
 					continue
 				}
 			}
 			return nil, err
 		}
-		s.upgradeLocker.RUnlock()
-		return newWriter(w, &s.upgradeLocker), nil
+		return newWriter(w, &s.writeLocker), nil
 	}
+	return nil, err
 }
 
 func (s *session) setDeadline() {
