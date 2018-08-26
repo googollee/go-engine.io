@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"io"
 
-	"gopkg.in/googollee/go-engine.io.v1/base"
+	"github.com/shiyanlin/go-engine.io/base"
 )
 
 type writerFeeder interface {

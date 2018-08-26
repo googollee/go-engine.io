@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"gopkg.in/googollee/go-engine.io.v1/base"
-	"gopkg.in/googollee/go-engine.io.v1/packet"
+
+	"github.com/shiyanlin/go-engine.io/base"
+	"github.com/shiyanlin/go-engine.io/packet"
 )
 
 type conn struct {
