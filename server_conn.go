@@ -359,27 +359,15 @@ func (c *serverConn) setState(state state) {
 
 func (c *serverConn) pingLoop() {
 	lastPing := time.Now()
-	lastTry := lastPing
 	for {
 		now := time.Now()
 		pingDiff := now.Sub(lastPing)
-		tryDiff := now.Sub(lastTry)
 		select {
 		case ok := <-c.pingChan:
 			if !ok {
 				return
 			}
 			lastPing = time.Now()
-			lastTry = lastPing
-		case <-time.After(c.pingInterval - tryDiff):
-			c.writerLocker.Lock()
-			if w, _ := c.getCurrent().NextWriter(message.MessageText, parser.PING); w != nil {
-				writer := newConnWriter(w, &c.writerLocker)
-				writer.Close()
-			} else {
-				c.writerLocker.Unlock()
-			}
-			lastTry = time.Now()
 		case <-time.After(c.pingTimeout - pingDiff):
 			c.Close()
 			return
