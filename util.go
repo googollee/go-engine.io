@@ -15,7 +15,7 @@ type writer struct {
 func newWriter(w io.WriteCloser, locker *sync.RWMutex) *writer {
 	return &writer{
 		WriteCloser: w,
-		locker:      locker,
+		locker:      new(sync.RWMutex),
 	}
 }
 
@@ -44,7 +44,7 @@ type reader struct {
 func newReader(r io.ReadCloser, locker *sync.RWMutex) *reader {
 	return &reader{
 		ReadCloser: r,
-		locker:     new(sync.RWMutex),
+		locker:     locker,
 	}
 }
 
