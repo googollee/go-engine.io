@@ -44,7 +44,7 @@ type reader struct {
 func newReader(r io.ReadCloser, locker *sync.RWMutex) *reader {
 	return &reader{
 		ReadCloser: r,
-		locker:     locker,
+		locker:     new(sync.RWMutex),
 	}
 }
 
