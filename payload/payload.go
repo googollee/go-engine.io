@@ -1,7 +1,6 @@
 package payload
 
 import (
-	"fmt"
 	"io"
 	"math"
 	"sync"
@@ -225,7 +224,6 @@ func (p *Payload) Pause() {
 // Resume resumes the payload.
 // It can call in multi-goroutine.
 func (p *Payload) Resume() {
-	fmt.Println("resume")
 	p.pauser.Resume()
 }
 
