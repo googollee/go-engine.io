@@ -3,6 +3,7 @@ package websocket
 import (
 	"io"
 	"io/ioutil"
+	"sync"
 
 	"github.com/googollee/go-engine.io/base"
 	"github.com/googollee/go-engine.io/transport"
@@ -11,6 +12,7 @@ import (
 
 type wrapper struct {
 	*websocket.Conn
+	writeLocker sync.Mutex
 }
 
 func newWrapper(conn *websocket.Conn) wrapper {
@@ -44,5 +46,8 @@ func (w wrapper) NextWriter(typ base.FrameType) (io.WriteCloser, error) {
 	default:
 		return nil, transport.ErrInvalidFrame
 	}
-	return w.Conn.NextWriter(t)
+	w.writeLocker.Lock()
+	writer, err := w.Conn.NextWriter(t)
+	w.writeLocker.Unlock()
+	return writer, err
 }
