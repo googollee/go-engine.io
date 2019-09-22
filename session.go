@@ -133,10 +133,27 @@ func (s *session) nextReader() (base.FrameType, base.PacketType, io.ReadCloser, 
 	var r io.ReadCloser
 	var err error
 	for {
+		//******* begin 20190506 ardingchen modified *******
+		//REASON: s.conn.NextReader() may be blocked for a duration at most to PingInterval,
+		//and if upgradeLocker is RLock() during that time, other one can't not to add Lock() for writing
+		//
+		//s.upgradeLocker.RLock()
+		//ft, pt, r, err = s.conn.NextReader()
+		//if err != nil {
+		//	s.upgradeLocker.RUnlock()
+		//	if op, ok := err.(payload.Error); ok {
+		//		if op.Temporary() {
+		//			continue
+		//		}
+		//	}
+		//	return 0, 0, nil, err
+		//}
+		//s.upgradeLocker.RUnlock()
 		s.upgradeLocker.RLock()
-		ft, pt, r, err = s.conn.NextReader()
+		tmpCon := s.conn
+		s.upgradeLocker.RUnlock()
+		ft, pt, r, err = tmpCon.NextReader()
 		if err != nil {
-			s.upgradeLocker.RUnlock()
 			if op, ok := err.(payload.Error); ok {
 				if op.Temporary() {
 					continue
@@ -144,10 +161,11 @@ func (s *session) nextReader() (base.FrameType, base.PacketType, io.ReadCloser, 
 			}
 			return 0, 0, nil, err
 		}
-		s.upgradeLocker.RUnlock()
+		//******* end 20190506 ardingchen modified ********
 		return ft, pt, newReader(r, &s.upgradeLocker), nil
 	}
 }
+
 
 func (s *session) nextWriter(ft base.FrameType, pt base.PacketType) (io.WriteCloser, error) {
 	for {
