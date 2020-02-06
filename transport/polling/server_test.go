@@ -64,7 +64,7 @@ func TestServerJSONP(t *testing.T) {
 		at.Equal("text/javascript; charset=UTF-8", resp.Header.Get("Content-Type"))
 		bs, err := ioutil.ReadAll(resp.Body)
 		at.Nil(err)
-		at.Equal("___eio[jsonp_f1](\"10:b4aGVsbG8=\");", string(bs))
+		at.Equal([]byte("___eio[jsonp_f1](\"10:b4aGVsbG8=\");"), bs)
 	}
 	{
 		u := httpSvr.URL + "?j=jsonp_f2"
@@ -75,7 +75,7 @@ func TestServerJSONP(t *testing.T) {
 		at.Equal("text/javascript; charset=UTF-8", resp.Header.Get("Content-Type"))
 		bs, err := ioutil.ReadAll(resp.Body)
 		at.Nil(err)
-		at.Equal("___eio[jsonp_f2](\"6:4world\");", string(bs))
+		at.Equal([]byte("___eio[jsonp_f2](\"6:4world\");"), bs)
 	}
 	wg.Wait()
 }
