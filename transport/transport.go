@@ -17,6 +17,9 @@ type Transport interface {
 	Name() string
 	Accept(w http.ResponseWriter, r *http.Request) (base.Conn, error)
 	Dial(u *url.URL, requestHeader http.Header) (base.Conn, error)
+
+	SetURL(u *url.URL)
+	GetURL() *url.URL
 }
 
 // Pauser is connection which can be paused and resumes.

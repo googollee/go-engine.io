@@ -12,6 +12,7 @@ import (
 type Transport struct {
 	Client      *http.Client
 	CheckOrigin func(r *http.Request) bool
+	url         *url.URL
 }
 
 // Default is the default transport.
@@ -36,6 +37,10 @@ func (t *Transport) Accept(w http.ResponseWriter, r *http.Request) (base.Conn, e
 // Dial dials connection to url.
 func (t *Transport) Dial(u *url.URL, requestHeader http.Header) (base.Conn, error) {
 	query := u.Query()
+	v := t.url.Query()
+	for key, value := range v {
+		query.Set(key, value[0])
+	}
 	query.Set("transport", t.Name())
 	u.RawQuery = query.Encode()
 
@@ -45,4 +50,12 @@ func (t *Transport) Dial(u *url.URL, requestHeader http.Header) (base.Conn, erro
 	}
 
 	return dial(client, u, requestHeader)
+}
+
+func (t *Transport) SetURL(url *url.URL) {
+	t.url = url
+}
+
+func (t *Transport) GetURL() *url.URL {
+	return t.url
 }

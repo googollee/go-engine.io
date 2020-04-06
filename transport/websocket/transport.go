@@ -21,14 +21,18 @@ type DialError struct {
 
 // Transport is websocket transport.
 type Transport struct {
-	ReadBufferSize   int
-	WriteBufferSize  int
-	NetDial          func(network, addr string) (net.Conn, error)
-	Proxy            func(*http.Request) (*url.URL, error)
+	ReadBufferSize  int
+	WriteBufferSize int
+
+	Subprotocols     []string
 	TLSClientConfig  *tls.Config
 	HandshakeTimeout time.Duration
-	Subprotocols     []string
-	CheckOrigin      func(r *http.Request) bool
+
+	url *url.URL
+
+	NetDial     func(network, addr string) (net.Conn, error)
+	Proxy       func(*http.Request) (*url.URL, error)
+	CheckOrigin func(r *http.Request) bool
 }
 
 // Default is default transport.
@@ -57,8 +61,13 @@ func (t *Transport) Dial(u *url.URL, requestHeader http.Header) (base.Conn, erro
 		u.Scheme = "wss"
 	}
 	query := u.Query()
+	v := t.url.Query()
+	for key, value := range v {
+		query.Set(key, value[0])
+	}
 	query.Set("transport", t.Name())
 	query.Set("t", base.Timestamp())
+
 	u.RawQuery = query.Encode()
 	c, resp, err := dialer.Dial(u.String(), requestHeader)
 	if err != nil {
@@ -84,4 +93,12 @@ func (t *Transport) Accept(w http.ResponseWriter, r *http.Request) (base.Conn, e
 	}
 
 	return newConn(c, *r.URL, r.Header), nil
+}
+
+func (t *Transport) SetURL(url *url.URL) {
+	t.url = url
+}
+
+func (t *Transport) GetURL() *url.URL {
+	return t.url
 }
