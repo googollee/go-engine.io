@@ -108,6 +108,11 @@ func (s *Server) Close() error {
 	return nil
 }
 
+// Count counts connected
+func (s *Server) Count() int {
+	return s.sessions.Count()
+}
+
 // Accept accepts a connection.
 func (s *Server) Accept() (Conn, error) {
 	c := <-s.connChan
